@@ -1,3 +1,4 @@
+#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 #ifndef REFLEX_UDPSERVER_H
 #define REFLEX_UDPSERVER_H
 
@@ -39,7 +40,7 @@ namespace udpserver {
 	public:
 		boost::array<uint8_t, Size> buffer;
 
-		void write(void* data, size_t size){
+		void write(const void* data, size_t size){
 			std::memcpy(buffer.elems + pos, data, size);
 			pos = pos + size;
 		}

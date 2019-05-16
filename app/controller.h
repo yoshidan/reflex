@@ -4,9 +4,8 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/array.hpp>
-#include "../udpserver.h"
-#include "../domain/StunHeader.h"
-#include "../repository/StunRepository.h"
+#include "udpserver.h"
+#include "stunheader.h"
 
 namespace controller {
 
@@ -21,9 +20,9 @@ namespace controller {
 	inline void handleStunRequest(const boost::asio::io_context &ioc, udpserver::Request &&request,
 						   const boost::asio::yield_context &yield) {
 
-		auto const stunRepository = repository::StunRepository();
+		domain::StunHeader requestHeader{};
+		requestHeader.fill(request.buffer);
 
-		auto const requestHeader = stunRepository.read(request.buffer);
 		if (!requestHeader.validateRequest()) {
 			logger::info("bad request:");
 			auto responseHeader = requestHeader.createForErrorResponse();
@@ -31,8 +30,7 @@ namespace controller {
 			domain::ErrorCodeAttributeValue attributeValue(0x04, 0x00);
 			domain::ErrorCodeAttribute attribute(4, attributeValue);
 
-			auto const buffer = stunRepository.error(responseHeader, attribute);
-
+			auto const buffer = responseHeader.createErrorBuffer(attribute);
 			boost::system::error_code ec;
 			request.server.async_send_to(boost::asio::buffer(buffer.buffer), request.client, yield[ec]);
 			error(ec);
@@ -52,7 +50,7 @@ namespace controller {
 				domain::IpV4MappedAddressAttributeValue attributeValue(address, port);
 				domain::XorMappedAddressAttribute<domain::IpV4MappedAddressAttributeValue> attribute(8, attributeValue);
 
-				auto const buffer = stunRepository.write(responseHeader, attribute);
+				auto const buffer = responseHeader.createWritingBuffer(attribute);
 				boost::system::error_code ec;
 				request.server.async_send_to(boost::asio::buffer(buffer.buffer), request.client, yield[ec]);
 				error(ec);
@@ -82,7 +80,7 @@ namespace controller {
 				domain::IpV6MappedAddressAttributeValue attributeValue(address, port);
 				domain::XorMappedAddressAttribute<domain::IpV6MappedAddressAttributeValue> attribute(20, attributeValue);
 
-				auto const buffer = stunRepository.write(responseHeader, attribute);
+				auto const buffer = responseHeader.createWritingBuffer(attribute);
 				boost::system::error_code ec;
 				request.server.async_send_to(boost::asio::buffer(buffer.buffer), request.client, yield[ec]);
 				error(ec);

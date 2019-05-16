@@ -3,7 +3,7 @@
 
 #include <boost/array.hpp>
 #include <iostream>
-#include "../udpserver.h"
+#include "udpserver.h"
 
 namespace domain {
 
@@ -13,24 +13,6 @@ namespace domain {
 	using transactionId = uint8_t[12];
 	using ipv6Address = uint8_t[16];
 
-	struct StunHeader {
-		/**
-		 * contains first 2bit 00,
-		 * - BindingRequest is 0x0001
-		 * - BindingResponse is 0x0101
-		 */
-		uint16_t messageType;
-		uint16_t bodyLengthByte;
-		uint32_t magicCookie;
-		transactionId transactionId;
-
-		StunHeader createForSuccessResponse() const;
-
-		StunHeader createForErrorResponse() const;
-
-		bool validateRequest() const;
-
-	};
 
 	struct ErrorCodeAttributeValue {
 		const uint16_t padding = 0x0000;
@@ -84,6 +66,36 @@ namespace domain {
 		XorMappedAddressAttribute(uint16_t&& valueLengthByte, const T& value) : valueLengthByte(valueLengthByte), value(value){
 		}
 	};
+
+	struct StunHeader {
+		/**
+		 * contains first 2bit 00,
+		 * - BindingRequest is 0x0001
+		 * - BindingResponse is 0x0101
+		 */
+		uint16_t messageType;
+		uint16_t bodyLengthByte;
+		uint32_t magicCookie;
+		transactionId transactionId;
+
+		StunHeader createForSuccessResponse() const;
+
+		StunHeader createForErrorResponse() const;
+
+		bool validateRequest() const;
+
+		void fill(udpserver::WebRTCStunBufferReader& reader);
+
+		template<size_t Size> void writeHeader(udpserver::Writer<Size>& writeBuffer) const;
+
+		udpserver::Writer<32> createWritingBuffer(const domain::XorMappedAddressAttribute<domain::IpV4MappedAddressAttributeValue>& attribute) const;
+
+		udpserver::Writer<44> createWritingBuffer(const domain::XorMappedAddressAttribute<domain::IpV6MappedAddressAttributeValue>& attribute) const;
+
+		udpserver::Writer<32> createErrorBuffer(const domain::ErrorCodeAttribute& attribute) const;
+
+	};
+
 }
 
 #endif

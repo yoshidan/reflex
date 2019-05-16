@@ -9,7 +9,7 @@
 #include <iostream>
 #include <boost/scoped_array.hpp>
 #include "app/udpserver.h"
-#include "app/controller/binding.h"
+#include "app/controller.h"
 
 int main(int argc, char *argv[]) {
 
