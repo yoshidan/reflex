@@ -1,0 +1,10 @@
+version: "3.3"
+services:
+  reflex:
+    build:
+      context: ""
+      dockerfile: Dockerfile
+    container_name: reflex
+    ports:
+      - "3478:3478/udp"
+
